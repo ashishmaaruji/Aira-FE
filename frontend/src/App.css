@@ -2,12 +2,13 @@
 
 .App {
   min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - minimal */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -15,32 +16,25 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: #e5e5e5;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #d4d4d4;
 }
 
-/* Focus styles */
+/* Focus styles - subtle */
 *:focus-visible {
-  outline: 2px solid #374151;
+  outline: 2px solid #e5e5e5;
   outline-offset: 2px;
-}
-
-/* Transitions */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
 }
 
 /* Chat bubble animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -49,7 +43,7 @@
 }
 
 .chat-bubble {
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.15s ease-out;
 }
 
 /* Pulse animation for live indicator */
@@ -58,26 +52,26 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.4;
   }
 }
 
-.animate-pulse {
+.animate-pulse-slow {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* State badge colors */
-.state-greeting { background-color: #dbeafe; color: #1e40af; }
-.state-language_selection { background-color: #e0e7ff; color: #3730a3; }
+/* State badge colors - purposeful only */
+.state-greeting { background-color: #f3f4f6; color: #374151; }
+.state-language_selection { background-color: #f3f4f6; color: #374151; }
 .state-qualification { background-color: #fef3c7; color: #92400e; }
 .state-objection_handling { background-color: #fee2e2; color: #991b1b; }
 .state-demo_offer { background-color: #d1fae5; color: #065f46; }
-.state-confirmation { background-color: #cffafe; color: #0e7490; }
-.state-closing { background-color: #f3e8ff; color: #6b21a8; }
-.state-transfer { background-color: #fce7f3; color: #9d174d; }
-.state-fallback { background-color: #f3f4f6; color: #374151; }
+.state-confirmation { background-color: #d1fae5; color: #065f46; }
+.state-closing { background-color: #f3f4f6; color: #374151; }
+.state-transfer { background-color: #e0e7ff; color: #3730a3; }
+.state-fallback { background-color: #f3f4f6; color: #6b7280; }
 
-/* Status colors */
+/* Status colors - conversion focused */
 .status-active { background-color: #d1fae5; color: #065f46; }
 .status-completed { background-color: #f3f4f6; color: #374151; }
 .status-failed { background-color: #fee2e2; color: #991b1b; }
@@ -88,3 +82,27 @@
 .prompt-draft { background-color: #fef3c7; color: #92400e; }
 .prompt-weak { background-color: #fee2e2; color: #991b1b; }
 .prompt-archived { background-color: #f3f4f6; color: #6b7280; }
+
+/* Side drawer animations */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-enter {
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Audio player minimal style */
+audio {
+  height: 28px;
+  border-radius: 4px;
+}
+
+audio::-webkit-media-controls-panel {
+  background-color: #f9fafb;
+}
