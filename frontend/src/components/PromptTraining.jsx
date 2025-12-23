@@ -364,7 +364,13 @@ const PromptTraining = () => {
               </Card>
             ) : (
               draftPrompts.map(prompt => (
-                <PromptCard key={prompt.id} prompt={prompt} />
+                <PromptCard 
+                  key={prompt.id} 
+                  prompt={prompt} 
+                  onEdit={openEditModal}
+                  onPublish={handlePublish}
+                  onMarkWeak={openWeakModal}
+                />
               ))
             )}
           </div>
