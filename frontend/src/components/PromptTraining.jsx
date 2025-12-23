@@ -485,7 +485,7 @@ const PromptTraining = () => {
           <DialogHeader>
             <DialogTitle>Edit Draft Prompt</DialogTitle>
             <DialogDescription>
-              {selectedPrompt && `${selectedPrompt.fsm_state.replace('_', ' ')} - ${languageLabels[selectedPrompt.language]}`}
+              {selectedPrompt && `${selectedPrompt.fsm_state.replace('_', ' ')} - ${LANGUAGE_LABELS[selectedPrompt.language]}`}
             </DialogDescription>
           </DialogHeader>
 
