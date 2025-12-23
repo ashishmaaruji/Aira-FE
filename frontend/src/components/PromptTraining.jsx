@@ -388,7 +388,14 @@ const PromptTraining = () => {
               </Card>
             ) : (
               weakPrompts.map(prompt => (
-                <PromptCard key={prompt.id} prompt={prompt} showActions={false} />
+                <PromptCard 
+                  key={prompt.id} 
+                  prompt={prompt} 
+                  showActions={false}
+                  onEdit={openEditModal}
+                  onPublish={handlePublish}
+                  onMarkWeak={openWeakModal}
+                />
               ))
             )}
           </div>
