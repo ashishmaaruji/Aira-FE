@@ -1,173 +1,175 @@
 # Aira Control Tower
 
-A Notion-like, minimal operator console to test, supervise, and train an FSM-driven AI voice agent.
-
-## Overview
-
-This is an **internal admin/operator console** for managing Aira, an AI voice agent. The UI provides tools for:
-- Testing voice interactions via text simulation
-- Monitoring live calls in real-time
-- Reviewing call history with advanced filtering
-- Training and managing prompts per FSM state
-- Viewing qualification data captured during calls
+A Notion-like, minimal operator console to test, supervise, and train Aira — an FSM-driven AI voice agent.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Frontend (React)                        │
+│                   React Frontend                            │
 │  ┌──────────┬──────────┬──────────┬──────────┬──────────┐  │
 │  │Test Aira │Live      │Call      │Prompt    │Qual.     │  │
 │  │          │Monitor   │Review    │Training  │Snapshot  │  │
 │  └──────────┴──────────┴──────────┴──────────┴──────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   Backend (FastAPI)                         │
+│               Spring Boot Backend                           │
+│                (Single Source of Truth)                     │
 │  ┌──────────┬──────────┬──────────┬──────────┬──────────┐  │
-│  │Webcall   │Calls     │FSM       │Prompts   │Stats     │  │
-│  │APIs      │APIs      │APIs      │APIs      │APIs      │  │
+│  │FSM       │Audio     │Prompts   │Calls     │Webcall   │  │
+│  │Engine    │Service   │Service   │Service   │API       │  │
 │  └──────────┴──────────┴──────────┴──────────┴──────────┘  │
-│                            │                                │
-│              FSM Engine (Deterministic)                     │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                       MongoDB                               │
-│  ┌──────────┬──────────┬──────────┐                        │
-│  │Calls     │Prompts   │Stats     │                        │
-│  └──────────┴──────────┴──────────┘                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Core Principles
+## Important: No Separate Backend
 
-1. **UI never decides conversation logic** - FSM is the single source of truth
-2. **FSM is deterministic** - States and transitions cannot be edited via UI
-3. **Prompts can be trained** - Per state/language, with draft → publish workflow
-4. **Minimalistic design** - Notion-like, calm, purposeful interface
+This Control Tower is **frontend-only**. It integrates directly with the existing Spring Boot backend.
+
+- ❌ NO FastAPI
+- ❌ NO MongoDB 
+- ✅ Spring Boot is the single source of truth
+
+## Quick Start
+
+### 1. Start Spring Boot Backend
+
+```bash
+cd /path/to/spring-boot-project
+./mvnw spring-boot:run
+# Or
+java -jar target/aira-backend.jar
+```
+
+Spring Boot should be running on `http://localhost:8080`
+
+### 2. Start React Frontend
+
+```bash
+cd /app/frontend
+
+# Install dependencies (first time only)
+yarn install
+
+# Start development server
+yarn start
+```
+
+Frontend runs on `http://localhost:3000`
+
+### 3. Use Control Tower
+
+Open `http://localhost:3000` in your browser.
 
 ## Modules
 
 ### 1. Test Aira (Dev/Test Mode)
 - Start webcall sessions via text simulation
-- Supports multiple languages (EN, ES, FR, DE)
-- Shows FSM state transitions in real-time
-- Clearly labeled as test mode (no IVR integration)
+- Languages: **HINGLISH** and **ENGLISH** only
+- Shows FSM state, silence count, objection count
+- Real audio playback per Aira turn
+- Uses: `POST /webcall/start`, `POST /webcall/input`, `POST /webcall/end`
 
-### 2. Live Call Monitor (Read-only)
-- Real-time view of active calls
-- Stats: Active calls, Total calls, Completed, Demo intents
-- Shows: Call status, FSM state, Language, Turn count
-- Auto-refreshes every 5 seconds
+### 2. Live Monitor (Read-only)
+- Real-time view of active calls (auto-refresh 5s)
+- Shows: Status, FSM state, Language, Turn count
+- Uses: `GET /admin/calls/live`
 
 ### 3. Call Review (High Volume Ready)
-- Paginated list supporting 500+ calls/day
-- Filters: Exit reason, Demo intent, Date range
-- Click call → view full conversation timeline
-- Audio replay placeholder per turn
+- Paginated list with filters (Exit Reason, Demo Intent, Date)
+- Click call → opens side drawer with full timeline
+- Real audio replay per Aira utterance
+- Uses: `GET /admin/calls`, `GET /admin/calls/{id}`
 
 ### 4. Prompt Training (Admin Only)
-- Per FSM State + Language prompt management
-- Tabs: Active / Drafts / Weak prompts
-- Workflow:
-  - Create new prompt → saved as Draft
-  - Edit draft → update text
-  - Publish draft → becomes Active
-  - Mark Active as Weak → must provide replacement text
-- FSM logic and transitions are NOT editable
+- Per FSM State + Language (HINGLISH/ENGLISH)
+- Workflow: Create Draft → Edit → Publish
+- Mark Active prompts as Weak (requires replacement)
+- FSM logic is read-only
+- Uses: `GET /admin/prompts`, `PUT /admin/prompts/draft`, `POST /admin/prompts/publish`
 
 ### 5. Qualification Snapshot (Read-only)
 - CRM payload view
-- Shows: Captured answers, Objections, Demo intent
-- View-only (no CRM writeback)
+- Captured answers, Objections, Demo intent
+- Uses: `GET /admin/calls/{id}/qualification`
 
-## API Reference
+## Spring Boot API Endpoints
 
-### Webcall APIs
-- `POST /api/webcall/start` - Start a new test call
-- `POST /api/webcall/input` - Send user input, get Aira response
-- `POST /api/webcall/end` - End a call
-
-### Call APIs
-- `GET /api/calls/live` - Get active calls
-- `GET /api/calls` - Paginated call history with filters
-- `GET /api/calls/{id}` - Full call details with timeline
-- `GET /api/calls/{id}/qualification` - Qualification data
-
-### FSM APIs (Read-only)
-- `GET /api/fsm/states` - All FSM state definitions
-- `GET /api/fsm/states/{state}` - Single state info
-
-### Prompt APIs
-- `GET /api/prompts` - List prompts with filters
-- `POST /api/prompts` - Create new prompt (as draft)
-- `PUT /api/prompts/{id}` - Update draft prompt
-- `POST /api/prompts/{id}/mark-weak` - Mark as weak + provide replacement
-- `POST /api/prompts/{id}/publish` - Publish draft to active
-
-### Stats API
-- `GET /api/stats` - Dashboard statistics
-
-## Running Locally
-
-### Prerequisites
-- Node.js 18+
-- Python 3.11+
-- MongoDB
-
-### Backend
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn server:app --reload --port 8001
+### Available (Confirmed)
+```
+POST /webcall/start        - Start test call
+POST /webcall/input        - Send user input
+POST /webcall/end          - End call
+GET  /audio/{file}.mp3     - Serve audio files
 ```
 
-### Frontend
-```bash
-cd frontend
-yarn install
-yarn start
+### Admin Endpoints (Expected)
+```
+GET  /admin/calls/live           - Live calls list
+GET  /admin/calls                - Call history (paginated)
+GET  /admin/calls/{id}           - Call detail with timeline
+GET  /admin/calls/{id}/qualification - Qualification data
+GET  /admin/prompts              - List prompts
+PUT  /admin/prompts/draft        - Save draft
+POST /admin/prompts/publish      - Publish prompt
+GET  /admin/fsm/states           - FSM state definitions
 ```
 
-The frontend runs on port 3000, backend on 8001.
+**Note:** Admin endpoints are mocked in the frontend until Spring Boot implements them.
+
+## Configuration
+
+### Frontend Environment
+Edit `/app/frontend/.env`:
+
+```env
+# Local development
+REACT_APP_BACKEND_URL=http://localhost:8080
+
+# Production
+REACT_APP_BACKEND_URL=https://your-spring-boot-server.com
+```
+
+## Design Philosophy
+
+- **Notion-like**: Minimal, calm, purposeful
+- **Typography > Decoration**: Clean text hierarchy
+- **Purposeful Colors**: Green = conversion, Amber = intent, Red = drop
+- **No Popups/Modals**: All details in side drawers
+- **Internal Use Only**: Admin/operator console, not end-user facing
+
+## Languages Supported
+
+- **HINGLISH** (Hindi + English)
+- **ENGLISH**
+
+ES/FR/DE have been removed per requirements.
 
 ## Tech Stack
 
-- **Frontend**: React 19, Tailwind CSS, shadcn/ui components
-- **Backend**: FastAPI, Motor (async MongoDB)
-- **Database**: MongoDB
-- **State Machine**: Simulated FSM (pluggable to real FSM)
+- **Frontend**: React 19, Tailwind CSS, shadcn/ui
+- **Backend**: Spring Boot (external, not part of this repo)
+- **Audio**: Served via Spring Boot `/audio/{file}.mp3`
 
-## FSM States
+## Folder Structure
 
-| State | Description | Transitions |
-|-------|-------------|-------------|
-| greeting | Initial greeting | → language_selection, qualification |
-| language_selection | Detect/confirm language | → qualification |
-| qualification | Gather user info | → objection_handling, demo_offer, closing |
-| objection_handling | Handle concerns | → qualification, demo_offer, closing |
-| demo_offer | Offer product demo | → confirmation, objection_handling, closing |
-| confirmation | Confirm demo details | → closing, transfer |
-| closing | End conversation | (terminal) |
-| transfer | Transfer to human | (terminal) |
-| fallback | Handle unknown inputs | → greeting, qualification |
+```
+/app/
+├── frontend/              # React application
+│   ├── src/
+│   │   ├── components/    # UI components
+│   │   ├── lib/           # API client
+│   │   └── App.js         # Main app
+│   └── .env               # Backend URL config
+├── backend_deprecated/    # Old FastAPI (not used)
+└── README.md             # This file
+```
 
-## Design Constraints Met
+## Development Notes
 
-- ✅ No authentication/roles required
-- ✅ No analytics dashboards
-- ✅ No IVR configuration
-- ✅ No CRM writeback
-- ✅ Notion-like minimal design
-- ✅ FSM read-only (only prompts trainable)
-- ✅ Prepared for future integrations
-
-## Future Integration Hooks
-
-- IVR integration (replace test mode)
-- CRM writeback (from qualification data)
-- ElevenLabs audio playback (audio URLs ready)
-- Real FSM engine connection (replace simulated)
+1. **Hot Reload**: Frontend auto-reloads on file changes
+2. **Mock Data**: Admin endpoints return mock data until Spring Boot implements them
+3. **Audio**: Audio URLs are constructed as `${BACKEND_URL}/audio/${filename}`
+4. **Side Drawers**: Used for all detail views (no modals)
