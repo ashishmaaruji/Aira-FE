@@ -17,12 +17,22 @@ export const webcallInput = (data) => api.post('/webcall/input', data);
 export const webcallEnd = (data) => api.post('/webcall/end', data);
 
 // Audio URL builder
-export const getAudioUrl = (audioFile) => {
-  if (!audioFile) return null;
+// Handles: full URLs, relative paths (/audio/file.mp3), or just filenames (file.mp3)
+export const getAudioUrl = (audioUrl) => {
+  if (!audioUrl) return null;
+  
   // If already a full URL, return as-is
-  if (audioFile.startsWith('http')) return audioFile;
-  // Otherwise, construct URL from Spring Boot
-  return `${BACKEND_URL}/audio/${audioFile}`;
+  if (audioUrl.startsWith('http://') || audioUrl.startsWith('https://')) {
+    return audioUrl;
+  }
+  
+  // If it's a relative path (starts with /), prefix with backend URL
+  if (audioUrl.startsWith('/')) {
+    return `${BACKEND_URL}${audioUrl}`;
+  }
+  
+  // Otherwise, assume it's just a filename - add /audio/ path
+  return `${BACKEND_URL}/audio/${audioUrl}`;
 };
 
 // ============== ADMIN APIs (Spring Boot - Planned, mocked if unavailable) ==============
