@@ -188,7 +188,7 @@ const TestAira = () => {
               {messages.length === 0 && callState === 'idle' && (
                 <div className="text-center py-12 text-gray-400">
                   <Phone className="mx-auto mb-3 opacity-50" size={32} />
-                  <p className="text-sm">Click "Call Aira" to start a test session</p>
+                  <p className="text-sm">Click &quot;Call Aira&quot; to start a test session</p>
                 </div>
               )}
 
