@@ -6,12 +6,82 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getPrompts, createPrompt, updatePrompt, markPromptWeak, publishPrompt, getFSMStates } from '@/lib/api';
 import { toast } from 'sonner';
 import { MessageSquare, Plus, Edit, AlertTriangle, Check, Loader2, Save, Lock } from 'lucide-react';
 import { format } from 'date-fns';
+
+const LANGUAGE_LABELS = {
+  en: 'English',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German'
+};
+
+// Moved outside component to avoid re-creation on every render
+const PromptCard = ({ prompt, showActions = true, onEdit, onPublish, onMarkWeak }) => (
+  <div className="border border-gray-200 rounded-lg p-4 bg-white" data-testid={`prompt-${prompt.id}`}>
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-2">
+          <Badge className={`state-${prompt.fsm_state}`}>
+            {prompt.fsm_state.replace('_', ' ')}
+          </Badge>
+          <Badge variant="outline">{LANGUAGE_LABELS[prompt.language]}</Badge>
+          <Badge className={`prompt-${prompt.status}`}>
+            {prompt.status}
+          </Badge>
+          <span className="text-xs text-gray-400">v{prompt.version}</span>
+        </div>
+        <p className="text-sm text-gray-700 whitespace-pre-wrap">{prompt.text}</p>
+        {prompt.notes && (
+          <p className="text-xs text-gray-500 mt-2 italic">Note: {prompt.notes}</p>
+        )}
+        <p className="text-xs text-gray-400 mt-2">
+          Updated {format(new Date(prompt.updated_at), 'MMM d, yyyy h:mm a')}
+        </p>
+      </div>
+      
+      {showActions && (
+        <div className="flex flex-col gap-2">
+          {prompt.status === 'draft' && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onEdit(prompt)}
+                data-testid={`edit-prompt-${prompt.id}`}
+              >
+                <Edit size={14} className="mr-1" />
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => onPublish(prompt.id)}
+                data-testid={`publish-prompt-${prompt.id}`}
+              >
+                <Check size={14} className="mr-1" />
+                Publish
+              </Button>
+            </>
+          )}
+          {prompt.status === 'active' && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => onMarkWeak(prompt)}
+              data-testid={`mark-weak-${prompt.id}`}
+            >
+              <AlertTriangle size={14} className="mr-1" />
+              Mark Weak
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+);
 
 const PromptTraining = () => {
   const [prompts, setPrompts] = useState([]);
