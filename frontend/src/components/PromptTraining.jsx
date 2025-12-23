@@ -1,87 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getPrompts, createPrompt, updatePrompt, markPromptWeak, publishPrompt, getFSMStates } from '@/lib/api';
+import { getPrompts, updatePromptDraft, markPromptWeak, publishPrompt, getFSMStates } from '@/lib/api';
 import { toast } from 'sonner';
 import { MessageSquare, Plus, Edit, AlertTriangle, Check, Loader2, Save, Lock } from 'lucide-react';
 import { format } from 'date-fns';
-
-const LANGUAGE_LABELS = {
-  en: 'English',
-  es: 'Spanish',
-  fr: 'French',
-  de: 'German'
-};
-
-// Moved outside component to avoid re-creation on every render
-const PromptCard = ({ prompt, showActions = true, onEdit, onPublish, onMarkWeak }) => (
-  <div className="border border-gray-200 rounded-lg p-4 bg-white" data-testid={`prompt-${prompt.id}`}>
-    <div className="flex items-start justify-between gap-4">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-2">
-          <Badge className={`state-${prompt.fsm_state}`}>
-            {prompt.fsm_state.replace('_', ' ')}
-          </Badge>
-          <Badge variant="outline">{LANGUAGE_LABELS[prompt.language]}</Badge>
-          <Badge className={`prompt-${prompt.status}`}>
-            {prompt.status}
-          </Badge>
-          <span className="text-xs text-gray-400">v{prompt.version}</span>
-        </div>
-        <p className="text-sm text-gray-700 whitespace-pre-wrap">{prompt.text}</p>
-        {prompt.notes && (
-          <p className="text-xs text-gray-500 mt-2 italic">Note: {prompt.notes}</p>
-        )}
-        <p className="text-xs text-gray-400 mt-2">
-          Updated {format(new Date(prompt.updated_at), 'MMM d, yyyy h:mm a')}
-        </p>
-      </div>
-      
-      {showActions && (
-        <div className="flex flex-col gap-2">
-          {prompt.status === 'draft' && (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onEdit(prompt)}
-                data-testid={`edit-prompt-${prompt.id}`}
-              >
-                <Edit size={14} className="mr-1" />
-                Edit
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => onPublish(prompt.id)}
-                data-testid={`publish-prompt-${prompt.id}`}
-              >
-                <Check size={14} className="mr-1" />
-                Publish
-              </Button>
-            </>
-          )}
-          {prompt.status === 'active' && (
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => onMarkWeak(prompt)}
-              data-testid={`mark-weak-${prompt.id}`}
-            >
-              <AlertTriangle size={14} className="mr-1" />
-              Mark Weak
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  </div>
-);
 
 const PromptTraining = () => {
   const [prompts, setPrompts] = useState([]);
@@ -90,15 +19,14 @@ const PromptTraining = () => {
   const [selectedState, setSelectedState] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('');
 
-  // Modals
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [weakModalOpen, setWeakModalOpen] = useState(false);
+  // Drawer State
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState('edit'); // 'edit', 'weak', 'create'
   const [selectedPrompt, setSelectedPrompt] = useState(null);
 
   // Form state
   const [formState, setFormState] = useState('');
-  const [formLanguage, setFormLanguage] = useState('en');
+  const [formLanguage, setFormLanguage] = useState('HINGLISH');
   const [formText, setFormText] = useState('');
   const [formNotes, setFormNotes] = useState('');
   const [replacementText, setReplacementText] = useState('');
@@ -123,8 +51,8 @@ const PromptTraining = () => {
   }, [fetchData]);
 
   const filteredPrompts = prompts.filter(p => {
-    if (selectedState && p.fsm_state !== selectedState) return false;
-    if (selectedLanguage && p.language !== selectedLanguage) return false;
+    if (selectedState && selectedState !== 'all' && p.fsmState !== selectedState) return false;
+    if (selectedLanguage && selectedLanguage !== 'all' && p.language !== selectedLanguage) return false;
     return true;
   });
 
@@ -132,49 +60,70 @@ const PromptTraining = () => {
   const draftPrompts = filteredPrompts.filter(p => p.status === 'draft');
   const weakPrompts = filteredPrompts.filter(p => p.status === 'weak');
 
-  const handleCreatePrompt = async () => {
-    if (!formState || !formLanguage || !formText.trim()) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await createPrompt({
-        fsm_state: formState,
-        language: formLanguage,
-        text: formText,
-        notes: formNotes
-      });
-      toast.success('Prompt created as draft');
-      setCreateModalOpen(false);
-      resetForm();
-      fetchData();
-    } catch (error) {
-      console.error('Failed to create prompt:', error);
-      toast.error('Failed to create prompt');
-    } finally {
-      setIsSaving(false);
-    }
+  const openEditDrawer = (prompt) => {
+    setSelectedPrompt(prompt);
+    setFormText(prompt.text);
+    setFormNotes(prompt.notes || '');
+    setDrawerMode('edit');
+    setDrawerOpen(true);
   };
 
-  const handleUpdatePrompt = async () => {
+  const openWeakDrawer = (prompt) => {
+    setSelectedPrompt(prompt);
+    setReplacementText('');
+    setFormNotes('');
+    setDrawerMode('weak');
+    setDrawerOpen(true);
+  };
+
+  const openCreateDrawer = () => {
+    setSelectedPrompt(null);
+    setFormState('greeting');
+    setFormLanguage('HINGLISH');
+    setFormText('');
+    setFormNotes('');
+    setDrawerMode('create');
+    setDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setTimeout(() => {
+      setSelectedPrompt(null);
+      setFormText('');
+      setFormNotes('');
+      setReplacementText('');
+    }, 200);
+  };
+
+  const handleSaveDraft = async () => {
     if (!formText.trim()) {
       toast.error('Prompt text is required');
       return;
     }
     setIsSaving(true);
     try {
-      await updatePrompt(selectedPrompt.id, {
-        text: formText,
-        notes: formNotes
-      });
-      toast.success('Prompt updated');
-      setEditModalOpen(false);
-      resetForm();
+      if (drawerMode === 'create') {
+        // For create, we'd call createPrompt, but using updatePromptDraft for now
+        await updatePromptDraft(null, {
+          fsmState: formState,
+          language: formLanguage,
+          text: formText,
+          notes: formNotes
+        });
+        toast.success('Draft created');
+      } else {
+        await updatePromptDraft(selectedPrompt.id, {
+          text: formText,
+          notes: formNotes
+        });
+        toast.success('Draft saved');
+      }
+      closeDrawer();
       fetchData();
     } catch (error) {
-      console.error('Failed to update prompt:', error);
-      toast.error(error.response?.data?.detail || 'Failed to update prompt');
+      console.error('Failed to save draft:', error);
+      toast.error('Failed to save draft');
     } finally {
       setIsSaving(false);
     }
@@ -187,16 +136,12 @@ const PromptTraining = () => {
     }
     setIsSaving(true);
     try {
-      await markPromptWeak(selectedPrompt.id, {
-        replacement_text: replacementText,
-        notes: formNotes
-      });
-      toast.success('Prompt marked as weak, new draft created');
-      setWeakModalOpen(false);
-      resetForm();
+      await markPromptWeak(selectedPrompt.id, replacementText);
+      toast.success('Prompt marked as weak, replacement draft created');
+      closeDrawer();
       fetchData();
     } catch (error) {
-      console.error('Failed to mark prompt weak:', error);
+      console.error('Failed to mark weak:', error);
       toast.error('Failed to mark prompt as weak');
     } finally {
       setIsSaving(false);
@@ -206,41 +151,18 @@ const PromptTraining = () => {
   const handlePublish = async (promptId) => {
     try {
       await publishPrompt(promptId);
-      toast.success('Prompt published successfully');
+      toast.success('Prompt published');
       fetchData();
     } catch (error) {
-      console.error('Failed to publish prompt:', error);
-      toast.error(error.response?.data?.detail || 'Failed to publish prompt');
+      console.error('Failed to publish:', error);
+      toast.error('Failed to publish prompt');
     }
-  };
-
-  const resetForm = () => {
-    setFormState('');
-    setFormLanguage('en');
-    setFormText('');
-    setFormNotes('');
-    setReplacementText('');
-    setSelectedPrompt(null);
-  };
-
-  const openEditModal = (prompt) => {
-    setSelectedPrompt(prompt);
-    setFormText(prompt.text);
-    setFormNotes(prompt.notes || '');
-    setEditModalOpen(true);
-  };
-
-  const openWeakModal = (prompt) => {
-    setSelectedPrompt(prompt);
-    setReplacementText('');
-    setFormNotes('');
-    setWeakModalOpen(true);
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="loading-spinner">
-        <Loader2 className="animate-spin text-gray-400" size={32} />
+        <Loader2 className="animate-spin text-gray-300" size={24} />
       </div>
     );
   }
@@ -250,32 +172,30 @@ const PromptTraining = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Prompt Training</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage prompts per FSM state and language</p>
+          <h1 className="text-xl font-semibold text-gray-900">Prompt Training</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Manage prompts per FSM state and language</p>
         </div>
-        <Button onClick={() => setCreateModalOpen(true)} data-testid="create-prompt-btn">
-          <Plus size={16} className="mr-2" />
+        <Button onClick={openCreateDrawer} className="bg-gray-900 hover:bg-gray-800" data-testid="create-prompt-btn">
+          <Plus size={16} className="mr-1.5" />
           New Prompt
         </Button>
       </div>
 
       {/* FSM Read-Only Notice */}
-      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3" data-testid="fsm-notice">
-        <Lock className="text-blue-600 mt-0.5" size={18} />
+      <div className="mb-5 bg-blue-50/80 border border-blue-100 rounded-md px-4 py-3 flex items-start gap-3" data-testid="fsm-notice">
+        <Lock className="text-blue-500 mt-0.5 flex-shrink-0" size={16} />
         <div>
           <p className="text-sm font-medium text-blue-800">FSM Logic is Read-Only</p>
-          <p className="text-xs text-blue-700 mt-0.5">
-            FSM states and transitions cannot be edited. Only prompts can be trained and published.
-          </p>
+          <p className="text-xs text-blue-600 mt-0.5">FSM states and transitions cannot be edited. Only prompts can be trained.</p>
         </div>
       </div>
 
       {/* Filters */}
-      <Card className="shadow-sm mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
+      <Card className="shadow-sm border-gray-100 mb-5">
+        <CardContent className="p-3">
+          <div className="flex items-center gap-3">
             <Select value={selectedState} onValueChange={setSelectedState}>
-              <SelectTrigger className="w-48 h-9" data-testid="state-filter">
+              <SelectTrigger className="w-44 h-8 text-xs" data-testid="state-filter">
                 <SelectValue placeholder="All FSM States" />
               </SelectTrigger>
               <SelectContent>
@@ -289,15 +209,13 @@ const PromptTraining = () => {
             </Select>
 
             <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-              <SelectTrigger className="w-36 h-9" data-testid="language-filter">
+              <SelectTrigger className="w-32 h-8 text-xs" data-testid="language-filter">
                 <SelectValue placeholder="All Languages" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Languages</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="es">Spanish</SelectItem>
-                <SelectItem value="fr">French</SelectItem>
-                <SelectItem value="de">German</SelectItem>
+                <SelectItem value="HINGLISH">Hinglish</SelectItem>
+                <SelectItem value="ENGLISH">English</SelectItem>
               </SelectContent>
             </Select>
 
@@ -306,8 +224,9 @@ const PromptTraining = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => { setSelectedState(''); setSelectedLanguage(''); }}
+                className="h-8 text-xs"
               >
-                Clear Filters
+                Clear
               </Button>
             )}
           </div>
@@ -316,50 +235,42 @@ const PromptTraining = () => {
 
       {/* Prompts Tabs */}
       <Tabs defaultValue="active" className="space-y-4">
-        <TabsList data-testid="prompt-tabs">
-          <TabsTrigger value="active">
+        <TabsList className="bg-gray-100/50" data-testid="prompt-tabs">
+          <TabsTrigger value="active" className="text-xs">
             Active ({activePrompts.length})
           </TabsTrigger>
-          <TabsTrigger value="draft">
+          <TabsTrigger value="draft" className="text-xs">
             Drafts ({draftPrompts.length})
           </TabsTrigger>
-          <TabsTrigger value="weak">
+          <TabsTrigger value="weak" className="text-xs">
             Weak ({weakPrompts.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" data-testid="active-prompts-tab">
-          <div className="space-y-4">
+          <div className="space-y-3">
             {activePrompts.length === 0 ? (
-              <Card className="shadow-sm">
+              <Card className="shadow-sm border-gray-100">
                 <CardContent className="py-12 text-center text-gray-400">
-                  <MessageSquare className="mx-auto mb-3 opacity-50" size={32} />
+                  <MessageSquare className="mx-auto mb-3 opacity-30" size={24} />
                   <p className="text-sm">No active prompts</p>
-                  <p className="text-xs mt-1">Create and publish prompts to see them here</p>
                 </CardContent>
               </Card>
             ) : (
               activePrompts.map(prompt => (
-                <PromptCard 
-                  key={prompt.id} 
-                  prompt={prompt} 
-                  onEdit={openEditModal}
-                  onPublish={handlePublish}
-                  onMarkWeak={openWeakModal}
-                />
+                <PromptCard key={prompt.id} prompt={prompt} onMarkWeak={openWeakDrawer} />
               ))
             )}
           </div>
         </TabsContent>
 
         <TabsContent value="draft" data-testid="draft-prompts-tab">
-          <div className="space-y-4">
+          <div className="space-y-3">
             {draftPrompts.length === 0 ? (
-              <Card className="shadow-sm">
+              <Card className="shadow-sm border-gray-100">
                 <CardContent className="py-12 text-center text-gray-400">
-                  <MessageSquare className="mx-auto mb-3 opacity-50" size={32} />
+                  <MessageSquare className="mx-auto mb-3 opacity-30" size={24} />
                   <p className="text-sm">No draft prompts</p>
-                  <p className="text-xs mt-1">Drafts will appear here for review before publishing</p>
                 </CardContent>
               </Card>
             ) : (
@@ -367,9 +278,8 @@ const PromptTraining = () => {
                 <PromptCard 
                   key={prompt.id} 
                   prompt={prompt} 
-                  onEdit={openEditModal}
+                  onEdit={openEditDrawer} 
                   onPublish={handlePublish}
-                  onMarkWeak={openWeakModal}
                 />
               ))
             )}
@@ -377,218 +287,203 @@ const PromptTraining = () => {
         </TabsContent>
 
         <TabsContent value="weak" data-testid="weak-prompts-tab">
-          <div className="space-y-4">
+          <div className="space-y-3">
             {weakPrompts.length === 0 ? (
-              <Card className="shadow-sm">
+              <Card className="shadow-sm border-gray-100">
                 <CardContent className="py-12 text-center text-gray-400">
-                  <AlertTriangle className="mx-auto mb-3 opacity-50" size={32} />
+                  <AlertTriangle className="mx-auto mb-3 opacity-30" size={24} />
                   <p className="text-sm">No weak prompts</p>
-                  <p className="text-xs mt-1">Prompts marked as weak will appear here</p>
                 </CardContent>
               </Card>
             ) : (
               weakPrompts.map(prompt => (
-                <PromptCard 
-                  key={prompt.id} 
-                  prompt={prompt} 
-                  showActions={false}
-                  onEdit={openEditModal}
-                  onPublish={handlePublish}
-                  onMarkWeak={openWeakModal}
-                />
+                <PromptCard key={prompt.id} prompt={prompt} showActions={false} />
               ))
             )}
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* Create Prompt Modal */}
-      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="max-w-lg" data-testid="create-prompt-modal">
-          <DialogHeader>
-            <DialogTitle>Create New Prompt</DialogTitle>
-            <DialogDescription>New prompts are saved as drafts until published.</DialogDescription>
-          </DialogHeader>
+      {/* Side Drawer */}
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <SheetContent className="w-[480px] sm:max-w-[480px]" data-testid="prompt-drawer">
+          <SheetHeader>
+            <SheetTitle className="text-base">
+              {drawerMode === 'create' ? 'Create New Prompt' : 
+               drawerMode === 'weak' ? 'Mark as Weak' : 'Edit Draft'}
+            </SheetTitle>
+            <SheetDescription>
+              {drawerMode === 'create' ? 'New prompts are saved as drafts until published.' :
+               drawerMode === 'weak' ? 'You must provide replacement text.' :
+               selectedPrompt && `${selectedPrompt.fsmState} - ${selectedPrompt.language}`}
+            </SheetDescription>
+          </SheetHeader>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>FSM State</Label>
-                <Select value={formState} onValueChange={setFormState}>
-                  <SelectTrigger className="mt-1" data-testid="create-state-select">
-                    <SelectValue placeholder="Select state" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fsmStates.map(s => (
-                      <SelectItem key={s.state} value={s.state}>
-                        {s.state.replace('_', ' ')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <div className="py-6 space-y-4">
+            {drawerMode === 'create' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs">FSM State</Label>
+                  <Select value={formState} onValueChange={setFormState}>
+                    <SelectTrigger className="mt-1.5" data-testid="create-state-select">
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fsmStates.map(s => (
+                        <SelectItem key={s.state} value={s.state}>
+                          {s.state.replace('_', ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Language</Label>
+                  <Select value={formLanguage} onValueChange={setFormLanguage}>
+                    <SelectTrigger className="mt-1.5" data-testid="create-language-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="HINGLISH">Hinglish</SelectItem>
+                      <SelectItem value="ENGLISH">English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <Label>Language</Label>
-                <Select value={formLanguage} onValueChange={setFormLanguage}>
-                  <SelectTrigger className="mt-1" data-testid="create-language-select">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Spanish</SelectItem>
-                    <SelectItem value="fr">French</SelectItem>
-                    <SelectItem value="de">German</SelectItem>
-                  </SelectContent>
-                </Select>
+            )}
+
+            {drawerMode === 'weak' && selectedPrompt && (
+              <div className="bg-gray-50 rounded-md p-3">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Current Prompt</p>
+                <p className="text-sm text-gray-700">{selectedPrompt.text}</p>
               </div>
-            </div>
+            )}
 
             <div>
-              <Label>Prompt Text</Label>
+              <Label className="text-xs">
+                {drawerMode === 'weak' ? 'Replacement Text *' : 'Prompt Text'}
+              </Label>
               <Textarea
-                value={formText}
-                onChange={(e) => setFormText(e.target.value)}
-                placeholder="Enter the prompt text..."
-                className="mt-1 min-h-32"
-                data-testid="create-text-input"
+                value={drawerMode === 'weak' ? replacementText : formText}
+                onChange={(e) => drawerMode === 'weak' ? setReplacementText(e.target.value) : setFormText(e.target.value)}
+                placeholder={drawerMode === 'weak' ? 'Enter improved prompt text...' : 'Enter the prompt text...'}
+                className="mt-1.5 min-h-[120px] text-sm"
+                data-testid="prompt-text-input"
               />
             </div>
 
             <div>
-              <Label>Notes (optional)</Label>
+              <Label className="text-xs">{drawerMode === 'weak' ? 'Reason' : 'Notes'} (optional)</Label>
               <Textarea
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
-                placeholder="Add any notes about this prompt..."
-                className="mt-1"
+                placeholder={drawerMode === 'weak' ? 'Why is this prompt weak?' : 'Add any notes...'}
+                className="mt-1.5 text-sm"
                 rows={2}
-                data-testid="create-notes-input"
+                data-testid="notes-input"
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setCreateModalOpen(false); resetForm(); }}>
+          <SheetFooter className="gap-2">
+            <Button variant="outline" onClick={closeDrawer}>
               Cancel
             </Button>
-            <Button onClick={handleCreatePrompt} disabled={isSaving} data-testid="save-prompt-btn">
-              {isSaving ? <Loader2 className="animate-spin mr-2" size={14} /> : <Save className="mr-2" size={14} />}
-              Save as Draft
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Prompt Modal */}
-      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="max-w-lg" data-testid="edit-prompt-modal">
-          <DialogHeader>
-            <DialogTitle>Edit Draft Prompt</DialogTitle>
-            <DialogDescription>
-              {selectedPrompt && `${selectedPrompt.fsm_state.replace('_', ' ')} - ${LANGUAGE_LABELS[selectedPrompt.language]}`}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label>Prompt Text</Label>
-              <Textarea
-                value={formText}
-                onChange={(e) => setFormText(e.target.value)}
-                placeholder="Enter the prompt text..."
-                className="mt-1 min-h-32"
-                data-testid="edit-text-input"
-              />
-            </div>
-
-            <div>
-              <Label>Notes (optional)</Label>
-              <Textarea
-                value={formNotes}
-                onChange={(e) => setFormNotes(e.target.value)}
-                placeholder="Add any notes..."
-                className="mt-1"
-                rows={2}
-                data-testid="edit-notes-input"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditModalOpen(false); resetForm(); }}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdatePrompt} disabled={isSaving} data-testid="update-prompt-btn">
-              {isSaving ? <Loader2 className="animate-spin mr-2" size={14} /> : <Save className="mr-2" size={14} />}
-              Update Draft
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Mark Weak Modal */}
-      <Dialog open={weakModalOpen} onOpenChange={setWeakModalOpen}>
-        <DialogContent className="max-w-lg" data-testid="mark-weak-modal">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle size={20} />
-              Mark Prompt as Weak
-            </DialogTitle>
-            <DialogDescription>
-              You must provide replacement text. A new draft will be created automatically.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedPrompt && (
-            <div className="bg-gray-50 rounded-lg p-3 text-sm">
-              <p className="text-gray-500 text-xs mb-1">Current prompt:</p>
-              <p className="text-gray-700">{selectedPrompt.text}</p>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <Label className="text-red-600">Replacement Text *</Label>
-              <Textarea
-                value={replacementText}
-                onChange={(e) => setReplacementText(e.target.value)}
-                placeholder="Enter improved prompt text..."
-                className="mt-1 min-h-32 border-red-200 focus:border-red-400"
-                data-testid="replacement-text-input"
-              />
-            </div>
-
-            <div>
-              <Label>Reason (optional)</Label>
-              <Textarea
-                value={formNotes}
-                onChange={(e) => setFormNotes(e.target.value)}
-                placeholder="Why is this prompt weak?"
-                className="mt-1"
-                rows={2}
-                data-testid="weak-reason-input"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setWeakModalOpen(false); resetForm(); }}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleMarkWeak}
-              disabled={isSaving || !replacementText.trim()}
-              data-testid="confirm-mark-weak-btn"
-            >
-              {isSaving ? <Loader2 className="animate-spin mr-2" size={14} /> : <AlertTriangle className="mr-2" size={14} />}
-              Mark Weak & Create Draft
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            {drawerMode === 'weak' ? (
+              <Button
+                variant="destructive"
+                onClick={handleMarkWeak}
+                disabled={isSaving || !replacementText.trim()}
+                data-testid="confirm-weak-btn"
+              >
+                {isSaving ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <AlertTriangle className="mr-1.5" size={14} />}
+                Mark Weak
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSaveDraft}
+                disabled={isSaving || !formText.trim()}
+                className="bg-gray-900 hover:bg-gray-800"
+                data-testid="save-draft-btn"
+              >
+                {isSaving ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <Save className="mr-1.5" size={14} />}
+                Save Draft
+              </Button>
+            )}
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
+
+// Prompt Card Component
+const PromptCard = ({ prompt, onEdit, onPublish, onMarkWeak, showActions = true }) => (
+  <Card className="shadow-sm border-gray-100" data-testid={`prompt-${prompt.id}`}>
+    <CardContent className="p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge className={`state-${prompt.fsmState} text-[10px]`}>
+              {prompt.fsmState?.replace('_', ' ')}
+            </Badge>
+            <Badge variant="outline" className="text-[10px]">{prompt.language}</Badge>
+            <Badge className={`prompt-${prompt.status} text-[10px]`}>
+              {prompt.status}
+            </Badge>
+            <span className="text-[10px] text-gray-400">v{prompt.version}</span>
+          </div>
+          <p className="text-sm text-gray-700 leading-relaxed">{prompt.text}</p>
+          {prompt.notes && (
+            <p className="text-xs text-gray-400 mt-2 italic">Note: {prompt.notes}</p>
+          )}
+          <p className="text-[10px] text-gray-400 mt-2">
+            Updated {format(new Date(prompt.updatedAt), 'MMM d, h:mm a')}
+          </p>
+        </div>
+        
+        {showActions && (
+          <div className="flex flex-col gap-1.5">
+            {prompt.status === 'draft' && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onEdit?.(prompt)}
+                  className="h-7 text-xs"
+                  data-testid={`edit-prompt-${prompt.id}`}
+                >
+                  <Edit size={12} className="mr-1" />
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => onPublish?.(prompt.id)}
+                  className="h-7 text-xs bg-gray-900 hover:bg-gray-800"
+                  data-testid={`publish-prompt-${prompt.id}`}
+                >
+                  <Check size={12} className="mr-1" />
+                  Publish
+                </Button>
+              </>
+            )}
+            {prompt.status === 'active' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onMarkWeak?.(prompt)}
+                className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50"
+                data-testid={`mark-weak-${prompt.id}`}
+              >
+                <AlertTriangle size={12} className="mr-1" />
+                Mark Weak
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default PromptTraining;
