@@ -1,34 +1,90 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* Aira Control Tower - Notion-like minimal design */
+
+.App {
+  min-height: 100vh;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.App-link {
-    color: #61dafb;
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid #374151;
+  outline-offset: 2px;
+}
+
+/* Transitions */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Chat bubble animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-bubble {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* State badge colors */
+.state-greeting { background-color: #dbeafe; color: #1e40af; }
+.state-language_selection { background-color: #e0e7ff; color: #3730a3; }
+.state-qualification { background-color: #fef3c7; color: #92400e; }
+.state-objection_handling { background-color: #fee2e2; color: #991b1b; }
+.state-demo_offer { background-color: #d1fae5; color: #065f46; }
+.state-confirmation { background-color: #cffafe; color: #0e7490; }
+.state-closing { background-color: #f3e8ff; color: #6b21a8; }
+.state-transfer { background-color: #fce7f3; color: #9d174d; }
+.state-fallback { background-color: #f3f4f6; color: #374151; }
+
+/* Status colors */
+.status-active { background-color: #d1fae5; color: #065f46; }
+.status-completed { background-color: #f3f4f6; color: #374151; }
+.status-failed { background-color: #fee2e2; color: #991b1b; }
+.status-transferred { background-color: #e0e7ff; color: #3730a3; }
+
+/* Prompt status colors */
+.prompt-active { background-color: #d1fae5; color: #065f46; }
+.prompt-draft { background-color: #fef3c7; color: #92400e; }
+.prompt-weak { background-color: #fee2e2; color: #991b1b; }
+.prompt-archived { background-color: #f3f4f6; color: #6b7280; }
