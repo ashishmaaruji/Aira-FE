@@ -138,13 +138,14 @@ const TestAira = () => {
     e.preventDefault();
     if (!inputText.trim() || !callId || isLoading) return;
 
-    const userMessage = {
+    // In test mode, we simulate user activity (not transcription)
+    const userActivity = {
       id: Date.now(),
       speaker: 'user',
-      text: inputText,
+      activityType: 'activity_detected', // Test mode simulates activity
       timestamp: new Date()
     };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => [...prev, userActivity]);
     setInputText('');
     setIsLoading(true);
 
