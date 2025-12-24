@@ -133,6 +133,35 @@ export const getStats = async () => {
   }
 };
 
+// ============== CALL POLICY APIs ==============
+
+export const getPolicy = async () => {
+  try {
+    return await api.get('/admin/policy');
+  } catch (error) {
+    console.warn('Using mock data for policy');
+    return { data: getMockPolicy() };
+  }
+};
+
+export const updatePolicyDraft = async (data) => {
+  try {
+    return await api.put('/admin/policy/draft', data);
+  } catch (error) {
+    console.warn('Mock: Policy draft saved locally');
+    return { data: { success: true, message: 'Policy draft saved (mock)', draft: data } };
+  }
+};
+
+export const publishPolicy = async () => {
+  try {
+    return await api.post('/admin/policy/publish');
+  } catch (error) {
+    console.warn('Mock: Policy published locally');
+    return { data: { success: true, message: 'Policy published (mock)' } };
+  }
+};
+
 // ============== MOCK DATA (Until Spring Boot endpoints are ready) ==============
 
 const getMockLiveCalls = () => [
