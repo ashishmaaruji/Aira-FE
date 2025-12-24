@@ -8,8 +8,16 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getCalls, getCallDetail, getAudioUrl } from '@/lib/api';
 import { toast } from 'sonner';
-import { FileText, Filter, ChevronLeft, ChevronRight, Loader2, Calendar, X, Play, Pause, VolumeX } from 'lucide-react';
+import { FileText, Filter, ChevronLeft, ChevronRight, Loader2, Calendar, X, Play, Pause, VolumeX, Volume2, VolumeOff, PhoneOff, Clock } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+
+// Activity type labels and icons
+const ACTIVITY_LABELS = {
+  activity_detected: 'Activity detected',
+  silence: 'Silence',
+  hangup: 'Hangup',
+  timeout: 'Timeout'
+};
 
 // Audio Player for timeline
 const AudioPlayer = ({ audioUrl }) => {
