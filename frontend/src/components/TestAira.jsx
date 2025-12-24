@@ -7,7 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { webcallStart, webcallInput, webcallEnd, getAudioUrl } from '@/lib/api';
 import { toast } from 'sonner';
-import { Phone, PhoneOff, Send, AlertCircle, Loader2, Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { Phone, PhoneOff, Send, AlertCircle, Loader2, Volume2, VolumeX, VolumeOff, Play, Pause, Clock } from 'lucide-react';
+
+// Activity type labels
+const ACTIVITY_LABELS = {
+  activity_detected: 'Activity detected',
+  silence: 'Silence',
+  hangup: 'Hangup',
+  timeout: 'Timeout'
+};
 
 // Audio Player Component
 const AudioPlayer = ({ audioUrl, size = 'sm' }) => {
