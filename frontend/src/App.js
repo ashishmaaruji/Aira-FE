@@ -126,6 +126,7 @@ function App() {
             <Route path="/monitor" element={<LiveMonitor />} />
             <Route path="/review" element={<CallReview />} />
             <Route path="/prompts" element={<PromptTraining />} />
+            <Route path="/policy" element={<CallPolicy />} />
             <Route path="/qualification" element={<QualificationSnapshot />} />
           </Routes>
         </Layout>
