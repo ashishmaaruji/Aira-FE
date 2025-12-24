@@ -7,12 +7,14 @@ import LiveMonitor from "@/components/LiveMonitor";
 import CallReview from "@/components/CallReview";
 import PromptTraining from "@/components/PromptTraining";
 import QualificationSnapshot from "@/components/QualificationSnapshot";
+import CallPolicy from "@/components/CallPolicy";
 import {
   Phone,
   Activity,
   FileText,
   MessageSquare,
   ClipboardList,
+  Settings,
   Menu,
   X
 } from "lucide-react";
@@ -23,6 +25,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { to: "/monitor", icon: Activity, label: "Live Monitor", testId: "nav-live-monitor" },
     { to: "/review", icon: FileText, label: "Call Review", testId: "nav-call-review" },
     { to: "/prompts", icon: MessageSquare, label: "Prompt Training", testId: "nav-prompts" },
+    { to: "/policy", icon: Settings, label: "Call Policy", testId: "nav-policy" },
     { to: "/qualification", icon: ClipboardList, label: "Qualification", testId: "nav-qualification" },
   ];
 
