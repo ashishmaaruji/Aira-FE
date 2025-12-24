@@ -286,28 +286,40 @@ const TestAira = () => {
                   className={`chat-bubble flex ${msg.speaker === 'user' ? 'justify-end' : 'justify-start'}`}
                   data-testid={`message-${msg.speaker}`}
                 >
-                  <div
-                    className={`max-w-[85%] rounded-lg px-3.5 py-2.5 ${
-                      msg.speaker === 'user'
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    <p className="text-[13px] leading-relaxed">{msg.text}</p>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className={`text-[10px] ${msg.speaker === 'user' ? 'text-gray-400' : 'text-gray-400'}`}>
+                  {msg.speaker === 'user' ? (
+                    /* User Activity - no transcription */
+                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-lg">
+                      {msg.activityType === 'silence' && <VolumeOff size={14} className="text-amber-400" />}
+                      {msg.activityType === 'activity_detected' && <Volume2 size={14} className="text-green-400" />}
+                      {msg.activityType === 'hangup' && <Phone size={14} className="text-red-400" />}
+                      {msg.activityType === 'timeout' && <Clock size={14} className="text-gray-400" />}
+                      {!msg.activityType && <Volume2 size={14} className="text-green-400" />}
+                      <span className="text-[12px] text-gray-300">
+                        {ACTIVITY_LABELS[msg.activityType] || 'User Activity'}
+                      </span>
+                      <span className="text-[10px] text-gray-500">
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      {msg.fsmState && msg.speaker === 'aira' && (
-                        <span className="text-[10px] text-gray-400 bg-gray-200/50 px-1.5 py-0.5 rounded">
-                          {msg.fsmState}
-                        </span>
-                      )}
-                      {msg.audioUrl && msg.speaker === 'aira' && (
-                        <AudioPlayer audioUrl={msg.audioUrl} size="sm" />
-                      )}
                     </div>
-                  </div>
+                  ) : (
+                    /* Aira Response - with text and audio */
+                    <div className="max-w-[85%] rounded-lg px-3.5 py-2.5 bg-gray-100 text-gray-900">
+                      <p className="text-[13px] leading-relaxed">{msg.text}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[10px] text-gray-400">
+                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {msg.fsmState && (
+                          <span className="text-[10px] text-gray-400 bg-gray-200/50 px-1.5 py-0.5 rounded">
+                            {msg.fsmState}
+                          </span>
+                        )}
+                        {msg.audioUrl && (
+                          <AudioPlayer audioUrl={msg.audioUrl} size="sm" />
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
 
