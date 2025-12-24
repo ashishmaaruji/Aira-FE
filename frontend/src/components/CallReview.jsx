@@ -410,28 +410,39 @@ const CallReview = () => {
                       className={`flex ${turn.speaker === 'user' ? 'justify-end' : 'justify-start'}`}
                       data-testid={`turn-${idx}`}
                     >
-                      <div
-                        className={`max-w-[85%] rounded-lg px-3 py-2.5 ${
-                          turn.speaker === 'user'
-                            ? 'bg-gray-900 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        <p className="text-[13px] leading-relaxed">{turn.text}</p>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <span className={`text-[10px] ${turn.speaker === 'user' ? 'text-gray-400' : 'text-gray-400'}`}>
+                      {turn.speaker === 'user' ? (
+                        /* User Activity - no transcription */
+                        <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-lg">
+                          {turn.activityType === 'silence' && <VolumeOff size={14} className="text-amber-400" />}
+                          {turn.activityType === 'activity_detected' && <Volume2 size={14} className="text-green-400" />}
+                          {turn.activityType === 'hangup' && <PhoneOff size={14} className="text-red-400" />}
+                          {turn.activityType === 'timeout' && <Clock size={14} className="text-gray-400" />}
+                          <span className="text-[12px] text-gray-300">
+                            {ACTIVITY_LABELS[turn.activityType] || 'User Activity'}
+                          </span>
+                          <span className="text-[10px] text-gray-500">
                             {format(new Date(turn.timestamp), 'h:mm:ss a')}
                           </span>
-                          {turn.fsmState && turn.speaker === 'aira' && (
-                            <span className="text-[10px] text-gray-400 bg-gray-200/50 px-1.5 py-0.5 rounded">
-                              {turn.fsmState}
-                            </span>
-                          )}
-                          {turn.audioUrl && turn.speaker === 'aira' && (
-                            <AudioPlayer audioUrl={turn.audioUrl} />
-                          )}
                         </div>
-                      </div>
+                      ) : (
+                        /* Aira Response - with text and audio */
+                        <div className="max-w-[85%] rounded-lg px-3 py-2.5 bg-gray-100 text-gray-900">
+                          <p className="text-[13px] leading-relaxed">{turn.text}</p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-[10px] text-gray-400">
+                              {format(new Date(turn.timestamp), 'h:mm:ss a')}
+                            </span>
+                            {turn.fsmState && (
+                              <span className="text-[10px] text-gray-400 bg-gray-200/50 px-1.5 py-0.5 rounded">
+                                {turn.fsmState}
+                              </span>
+                            )}
+                            {turn.audioUrl && (
+                              <AudioPlayer audioUrl={turn.audioUrl} />
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
