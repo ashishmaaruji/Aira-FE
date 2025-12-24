@@ -304,4 +304,42 @@ const getMockStats = () => ({
   conversionRate: 33
 });
 
+const getMockPolicy = () => ({
+  // Active policy (currently in use)
+  active: {
+    retryRules: {
+      maxAttempts: 3,
+      delayMinutes: 30
+    },
+    callingHours: {
+      startTime: '09:00',
+      endTime: '20:00',
+      sundayAllowed: false,
+      newLeadOverrideMinutes: 15
+    },
+    numberHealth: {
+      failureCountThreshold: 5,
+      answerRateThreshold: 20,
+      hangupDurationThreshold: 3
+    },
+    silenceRules: {
+      timeoutSeconds: 8,
+      maxSilenceStrikes: 3
+    },
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+    publishedAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  // Draft policy (unpublished changes)
+  draft: null,
+  // Current number status (read-only)
+  numberStatus: {
+    primaryNumber: '+91-9876543210',
+    status: 'healthy',
+    failureCount: 2,
+    answerRate: 45,
+    avgHangupDuration: 12,
+    lastChecked: new Date().toISOString()
+  }
+});
+
 export default api;
