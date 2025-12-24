@@ -233,15 +233,17 @@ const getMockCallDetail = (callId) => ({
   silenceCount: 2,
   objectionCount: 1,
   turns: [
-    { id: 't1', timestamp: new Date(Date.now() - 590000).toISOString(), speaker: 'aira', text: 'Namaste! Main Aira hoon. Aap kaise hain aaj?', fsmState: 'greeting', audioUrl: 'greeting_01.mp3' },
-    { id: 't2', timestamp: new Date(Date.now() - 580000).toISOString(), speaker: 'user', text: 'Haan theek hoon. Mujhe property ke baare mein jaanna hai.', fsmState: 'greeting' },
-    { id: 't3', timestamp: new Date(Date.now() - 570000).toISOString(), speaker: 'aira', text: 'Bahut accha! Aap konse area mein property dhundh rahe hain?', fsmState: 'qualification', audioUrl: 'qualification_01.mp3' },
-    { id: 't4', timestamp: new Date(Date.now() - 560000).toISOString(), speaker: 'user', text: 'Gurugram mein 3BHK chahiye.', fsmState: 'qualification' },
-    { id: 't5', timestamp: new Date(Date.now() - 550000).toISOString(), speaker: 'aira', text: 'Bahut badhiya! Hamare paas Gurugram mein kaafi options hain. Kya aap ek demo dekhna chahenge?', fsmState: 'demo_offer', audioUrl: 'demo_offer_01.mp3' },
-    { id: 't6', timestamp: new Date(Date.now() - 540000).toISOString(), speaker: 'user', text: 'Haan zaroor', fsmState: 'demo_offer' },
-    { id: 't7', timestamp: new Date(Date.now() - 530000).toISOString(), speaker: 'aira', text: 'Perfect! Main aapko kal 3 baje ke liye schedule kar deti hoon. Kya yeh time theek hai?', fsmState: 'confirmation', audioUrl: 'confirmation_01.mp3' },
-    { id: 't8', timestamp: new Date(Date.now() - 520000).toISOString(), speaker: 'user', text: 'Haan theek hai', fsmState: 'confirmation' },
-    { id: 't9', timestamp: new Date(Date.now() - 510000).toISOString(), speaker: 'aira', text: 'Dhanyavaad! Aapka demo kal 3 baje scheduled hai. Aapka din accha ho!', fsmState: 'closing', audioUrl: 'closing_01.mp3' }
+    { id: 't1', timestamp: new Date(Date.now() - 590000).toISOString(), speaker: 'aira', text: 'Namaste! Main Aira hoon. Aap kaise hain aaj?', fsmState: 'greeting', audioUrl: '/audio/greeting_01.mp3' },
+    { id: 't2', timestamp: new Date(Date.now() - 580000).toISOString(), speaker: 'user', activityType: 'activity_detected', fsmState: 'greeting' },
+    { id: 't3', timestamp: new Date(Date.now() - 570000).toISOString(), speaker: 'aira', text: 'Bahut accha! Aap konse area mein property dhundh rahe hain?', fsmState: 'qualification', audioUrl: '/audio/qualification_01.mp3' },
+    { id: 't4', timestamp: new Date(Date.now() - 560000).toISOString(), speaker: 'user', activityType: 'activity_detected', fsmState: 'qualification' },
+    { id: 't5', timestamp: new Date(Date.now() - 550000).toISOString(), speaker: 'aira', text: 'Bahut badhiya! Hamare paas Gurugram mein kaafi options hain. Kya aap ek demo dekhna chahenge?', fsmState: 'demo_offer', audioUrl: '/audio/demo_offer_01.mp3' },
+    { id: 't6', timestamp: new Date(Date.now() - 540000).toISOString(), speaker: 'user', activityType: 'silence', fsmState: 'demo_offer' },
+    { id: 't7', timestamp: new Date(Date.now() - 535000).toISOString(), speaker: 'aira', text: 'Kya aap abhi bhi line par hain?', fsmState: 'demo_offer', audioUrl: '/audio/silence_prompt_01.mp3' },
+    { id: 't8', timestamp: new Date(Date.now() - 530000).toISOString(), speaker: 'user', activityType: 'activity_detected', fsmState: 'demo_offer' },
+    { id: 't9', timestamp: new Date(Date.now() - 520000).toISOString(), speaker: 'aira', text: 'Perfect! Main aapko kal 3 baje ke liye schedule kar deti hoon. Kya yeh time theek hai?', fsmState: 'confirmation', audioUrl: '/audio/confirmation_01.mp3' },
+    { id: 't10', timestamp: new Date(Date.now() - 510000).toISOString(), speaker: 'user', activityType: 'activity_detected', fsmState: 'confirmation' },
+    { id: 't11', timestamp: new Date(Date.now() - 500000).toISOString(), speaker: 'aira', text: 'Dhanyavaad! Aapka demo kal 3 baje scheduled hai. Aapka din accha ho!', fsmState: 'closing', audioUrl: '/audio/closing_01.mp3' }
   ],
   qualificationData: {
     location: 'Gurugram',
