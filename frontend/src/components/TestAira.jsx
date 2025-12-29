@@ -119,7 +119,7 @@ const TestAira = () => {
       setMessages([{
         id: Date.now(),
         speaker: 'aira',
-        text: data.initialMessage || data.initial_message || data.message || 'Hello! How can I help you?',
+        text: data.airaText || data.initial_message || data.message || 'Hello! How can I help you?',
         timestamp: new Date(),
         fsmState: data.fsmState || data.fsm_state || 'greeting',
         audioUrl: data.audioUrl || data.audio_url
@@ -155,7 +155,7 @@ const TestAira = () => {
         call_id: callId, 
         userInput: inputText,
         user_input: inputText 
-      });
+      }, sessionId);
       const data = response.data;
       
       const newFsmState = data.fsmState || data.fsm_state || fsmState;
@@ -166,7 +166,7 @@ const TestAira = () => {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         speaker: 'aira',
-        text: data.airaResponse || data.aira_response || data.response || data.message,
+        text: data.airaText || data.aira_response || data.response || data.message,
         timestamp: new Date(),
         fsmState: newFsmState,
         audioUrl: data.audioUrl || data.audio_url
@@ -187,7 +187,7 @@ const TestAira = () => {
   const handleEndCall = async () => {
     if (!callId) return;
     try {
-      await webcallEnd({ callId: callId, call_id: callId });
+      await webcallEnd({ callId: callId, call_id: callId }, sessionId);
       setCallState('ended');
       toast.success('Call ended');
     } catch (error) {

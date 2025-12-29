@@ -36,11 +36,19 @@ const PromptTraining = () => {
     setIsLoading(true);
     try {
       const [promptsRes, statesRes] = await Promise.all([getPrompts({}), getFSMStates()]);
-      setPrompts(promptsRes.data);
-      setFsmStates(statesRes.data);
+      // Ensure prompts and fsmStates are always arrays
+      const promptsData = promptsRes.data;
+      const promptsArray = Array.isArray(promptsData) ? promptsData : [];
+      setPrompts(promptsArray);
+      
+      const statesData = statesRes.data;
+      const statesArray = Array.isArray(statesData) ? statesData : [];
+      setFsmStates(statesArray);
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('Failed to fetch prompts');
+      setPrompts([]);
+      setFsmStates([]);
     } finally {
       setIsLoading(false);
     }

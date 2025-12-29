@@ -18,11 +18,20 @@ const LiveMonitor = () => {
     if (showRefreshIndicator) setIsRefreshing(true);
     try {
       const [callsRes, statsRes] = await Promise.all([getLiveCalls(), getStats()]);
-      setCalls(callsRes.data);
-      setStats(statsRes.data);
+      // Ensure calls is always an array - handle different response structures
+      const callsData = callsRes.data;
+      const callsArray = Array.isArray(callsData) 
+        ? callsData 
+        : (callsData?.calls && Array.isArray(callsData.calls) 
+          ? callsData.calls 
+          : []);
+      setCalls(callsArray);
+      setStats(statsRes.data || {});
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to fetch live calls:', error);
+      // Ensure calls is always an array even on error
+      setCalls([]);
       // Don't show error toast on auto-refresh
       if (showRefreshIndicator) {
         toast.error('Failed to fetch live data');

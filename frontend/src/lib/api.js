@@ -13,8 +13,14 @@ const api = axios.create({
 
 // ============== WEBCALL APIs (Spring Boot - Available) ==============
 export const webcallStart = (data) => api.post('/webcall/start', data);
-export const webcallInput = (data) => api.post('/webcall/input', data);
-export const webcallEnd = (data) => api.post('/webcall/end', data);
+export const webcallInput = (data, sessionId) => {
+  const requestData = sessionId ? { ...data, sessionId } : data;
+  return api.post('/webcall/input', requestData);
+};
+export const webcallEnd = (data, sessionId) => {
+  const requestData = sessionId ? { ...data, sessionId } : data;
+  return api.post('/webcall/end', requestData);
+};
 
 // Audio URL builder
 // Handles: full URLs, relative paths (/audio/file.mp3), or just filenames (file.mp3)

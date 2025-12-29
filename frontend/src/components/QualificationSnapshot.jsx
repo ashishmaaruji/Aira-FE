@@ -32,12 +32,16 @@ const QualificationSnapshot = () => {
       if (demoIntentFilter && demoIntentFilter !== 'all') params.demo_intent = demoIntentFilter === 'true';
 
       const response = await getCalls(params);
-      setCalls(response.data.calls);
-      setTotalCalls(response.data.total);
-      setTotalPages(response.data.totalPages);
+      // Ensure calls is always an array
+      const callsData = response.data?.calls || response.data;
+      const callsArray = Array.isArray(callsData) ? callsData : [];
+      setCalls(callsArray);
+      setTotalCalls(response.data?.total || 0);
+      setTotalPages(response.data?.totalPages || 0);
     } catch (error) {
       console.error('Failed to fetch calls:', error);
       toast.error('Failed to fetch calls');
+      setCalls([]);
     } finally {
       setIsLoading(false);
     }
@@ -268,13 +272,13 @@ const QualificationSnapshot = () => {
                   <AlertCircle size={14} className="text-gray-400" />
                   <h3 className="text-xs font-medium text-gray-700">Objections Raised</h3>
                 </div>
-                {(selectedQualification.objections || []).length === 0 ? (
+                {(Array.isArray(selectedQualification.objections) ? selectedQualification.objections : []).length === 0 ? (
                   <div className="bg-gray-50 rounded-md p-3 text-sm text-gray-400">
                     No objections recorded
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {selectedQualification.objections.map((objection, idx) => (
+                    {(Array.isArray(selectedQualification.objections) ? selectedQualification.objections : []).map((objection, idx) => (
                       <div key={idx} className="bg-red-50 border border-red-100 rounded-md p-2.5">
                         <p className="text-xs text-red-700">{objection}</p>
                       </div>

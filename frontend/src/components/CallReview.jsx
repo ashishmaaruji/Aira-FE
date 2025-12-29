@@ -115,12 +115,16 @@ const CallReview = () => {
       if (dateTo) params.date_to = dateTo;
 
       const response = await getCalls(params);
-      setCalls(response.data.calls);
-      setTotalCalls(response.data.total);
-      setTotalPages(response.data.totalPages);
+      // Ensure calls is always an array
+      const callsData = response.data?.calls || response.data;
+      const callsArray = Array.isArray(callsData) ? callsData : [];
+      setCalls(callsArray);
+      setTotalCalls(response.data?.total || 0);
+      setTotalPages(response.data?.totalPages || 0);
     } catch (error) {
       console.error('Failed to fetch calls:', error);
       toast.error('Failed to fetch call history');
+      setCalls([]);
     } finally {
       setIsLoading(false);
     }
@@ -222,7 +226,7 @@ const CallReview = () => {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-32 h-8 text-xs"
+                  className="w-33 h-8 text-xs"
                   data-testid="date-from-input"
                 />
                 <span className="text-gray-300">—</span>
@@ -230,7 +234,7 @@ const CallReview = () => {
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="w-32 h-8 text-xs"
+                  className="w-33 h-8 text-xs"
                   data-testid="date-to-input"
                 />
               </div>
@@ -404,7 +408,7 @@ const CallReview = () => {
               {/* Conversation Timeline */}
               <ScrollArea className="flex-1 px-5 py-4">
                 <div className="space-y-3">
-                  {callDetail.turns?.map((turn, idx) => (
+                  {(Array.isArray(callDetail.turns) ? callDetail.turns : []).map((turn, idx) => (
                     <div
                       key={turn.id || idx}
                       className={`flex ${turn.speaker === 'user' ? 'justify-end' : 'justify-start'}`}
