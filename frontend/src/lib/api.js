@@ -22,6 +22,26 @@ export const webcallEnd = (data, sessionId) => {
   return api.post('/webcall/end', requestData);
 };
 
+// ============== IVR CALL APIs (Smartflo Click to Call Support) ==============
+/**
+ * Initiates an outbound call via Smartflo Click to Call Support API.
+ * This triggers a real phone call to the specified number.
+ * 
+ * @param {string} phoneNumber - The phone number to call (E.164 format, e.g., +919876543210)
+ * @returns {Promise} - Response with sessionId on success
+ */
+export const initiateIvrCall = (phoneNumber) => api.post('/api/v1/ivr/call', { toNumber: phoneNumber });
+
+/**
+ * Gets the health status of the IVR integration.
+ */
+export const getIvrHealth = () => api.get('/api/v1/ivr/health');
+
+/**
+ * Gets the list of active IVR calls.
+ */
+export const getActiveIvrCalls = () => api.get('/api/v1/ivr/calls/active');
+
 // Audio URL builder
 // Handles: full URLs, relative paths (/audio/file.mp3), or just filenames (file.mp3)
 export const getAudioUrl = (audioUrl) => {
